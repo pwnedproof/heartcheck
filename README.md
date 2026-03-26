@@ -5,7 +5,7 @@
 ```markdown
 # 💔 HeartCheck
 
-A simple tool that gives you an honest answer about your situation.
+A simple tool that gives you an honest answer about your situation. Training an LLM to give better responses
 
 🌹 https://pwnedproof.github.io/heartcheck/
 
