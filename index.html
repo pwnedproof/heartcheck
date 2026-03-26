@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartcheck — Should I Text Them?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose:#d64060;--rose-l:#fbeef1;--rose-b:#f0b8c4;
+    --blush:#e8849a;--mauve:#b05e90;--mauve-l:#f7edf4;
+    --sage:#4a9464;--sage-l:#edf6f0;--sage-b:#b0d8bc;
+    --gold:#b07030;--gold-l:#fdf3e4;--gold-b:#e8c080;
+    --cream:#fdf7f2;--warm:#fffcfa;
+    --text:#2a1a14;--muted:#8a6a5e;--faint:#c4a89c;
+    --border:rgba(180,120,100,0.18);--border2:rgba(180,120,100,0.32);
+    --serif:'DM Serif Display',Georgia,serif;
+    --sans:'DM Sans',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--cream);color:var(--text);font-family:var(--sans);min-height:100vh;line-height:1.6}
+
+  header{background:var(--warm);border-bottom:1px solid var(--border2);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(180,80,60,.07)}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-heart{width:34px;height:34px;background:var(--rose-l);border:1px solid var(--rose-b);border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .logo-heart svg{width:16px;height:16px}
+  .logo-name{font-family:var(--serif);font-size:1.35rem;color:var(--rose);line-height:1}
+  .logo-sub{font-size:0.67rem;color:var(--muted);letter-spacing:.06em;margin-top:2px}
+  .built-pill{font-size:0.7rem;color:var(--sage);background:var(--sage-l);border:1px solid var(--sage-b);border-radius:20px;padding:4px 13px;font-weight:500}
+
+  .app{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 62px);max-width:1100px;margin:0 auto}
+  main{padding:32px 28px 60px;border-right:1px solid var(--border)}
+  aside{padding:24px 20px;background:var(--warm)}
+
+  .hero{text-align:center;padding:12px 0 28px}
+  .hero h2{font-family:var(--serif);font-size:2.1rem;color:var(--text);line-height:1.2}
+  .hero h2 em{color:var(--rose);font-style:italic}
+  .hero p{color:var(--muted);font-size:.88rem;margin-top:8px}
+
+  .lbl{font-size:.68rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;display:block}
+  textarea{width:100%;background:var(--warm);border:1px solid var(--border2);border-radius:16px;color:var(--text);font-family:var(--sans);font-size:.93rem;line-height:1.7;padding:16px 18px;resize:vertical;min-height:148px;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 4px rgba(180,80,60,.07)}
+  textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(214,64,96,.08)}
+  textarea::placeholder{color:var(--faint)}
+
+  .analyze-btn{margin-top:12px;width:100%;padding:13px;border-radius:50px;background:var(--rose);color:#fff;font-family:var(--sans);font-size:.95rem;font-weight:500;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(214,64,96,.30);transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .analyze-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(214,64,96,.38)}
+  .analyze-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+  .loader{display:none;height:3px;background:var(--border);border-radius:2px;margin:16px 0;overflow:hidden}
+  .loader.on{display:block}
+  .loader-fill{height:100%;background:var(--rose);border-radius:2px;animation:ld 1.8s ease-in-out infinite}
+  @keyframes ld{0%{width:0%}50%{width:70%}100%{width:100%}}
+
+  .results{display:none;margin-top:24px;animation:fu .45s ease}
+  .results.on{display:block}
+  @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  .reading-card{background:var(--warm);border:1px solid var(--border2);border-top:4px solid var(--rose);border-radius:18px;padding:20px 22px;margin-bottom:16px;box-shadow:0 4px 16px rgba(180,80,60,.10)}
+  .rhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .rid{font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .cbadge{font-size:.65rem;font-weight:600;padding:3px 12px;border-radius:20px}
+  .cb-h{background:var(--rose-l);color:var(--rose);border:1px solid var(--rose-b)}
+  .cb-m{background:var(--gold-l);color:var(--gold);border:1px solid var(--gold-b)}
+  .cb-l{background:var(--sage-l);color:var(--sage);border:1px solid var(--sage-b)}
+  .rrow{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:.84rem;gap:12px}
+  .rrow:last-child{border-bottom:none}
+  .rk{color:var(--muted);font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;flex-shrink:0;padding-top:1px}
+  .rv{text-align:right;max-width:230px;font-size:.84rem}
+
+  .verdict{border-radius:18px;padding:20px 22px;margin-bottom:16px;display:flex;align-items:center;gap:18px;border:1px solid transparent;box-shadow:0 1px 4px rgba(180,80,60,.07)}
+  .v-yes{background:var(--sage-l);border-color:var(--sage-b)}
+  .v-no{background:var(--rose-l);border-color:var(--rose-b)}
+  .v-wait{background:var(--gold-l);border-color:var(--gold-b)}
+  .v-move{background:var(--mauve-l);border-color:#d4a8c8}
+  .vicon{font-size:2.6rem;flex-shrink:0;line-height:1}
+  .vdec{font-family:var(--serif);font-size:1.9rem;line-height:1}
+  .vd-yes{color:var(--sage)}.vd-no{color:var(--rose)}.vd-wait{color:var(--gold)}.vd-move{color:var(--mauve)}
+  .vconf{font-size:.74rem;color:var(--muted);margin-top:5px;font-weight:500}
+  .vsub{font-size:.86rem;color:var(--muted);line-height:1.6;max-width:220px;font-style:italic}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--warm);border:1px solid var(--border2);border-radius:14px;padding:16px 18px;box-shadow:0 1px 4px rgba(180,80,60,.07)}
+  .ctitle{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+  .wide{grid-column:span 2}
+
+  .flag-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+  .flag-row:last-child{border-bottom:none}
+  .fbadge{font-size:.65rem;font-weight:600;padding:2px 9px;border-radius:10px}
+  .fb-high{background:var(--rose-l);color:var(--rose);border:1px solid var(--rose-b)}
+  .fb-medium{background:var(--gold-l);color:var(--gold);border:1px solid var(--gold-b)}
+  .fb-low{background:var(--sage-l);color:var(--sage);border:1px solid var(--sage-b)}
+  .fb-none{background:var(--cream);color:var(--faint);border:1px solid var(--border)}
+
+  .risk-row{margin-bottom:10px}
+  .risk-lbl{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px}
+  .risk-pct{font-size:.73rem;color:var(--muted)}
+  .risk-track{height:7px;background:var(--cream);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+  .risk-fill{height:100%;border-radius:4px;transition:width 1.2s ease}
+  .rf-rose{background:var(--rose)}.rf-gold{background:var(--gold)}.rf-sage{background:var(--sage)}
+
+  .etrack{height:30px;border-radius:8px;overflow:hidden;display:flex;border:1px solid var(--border2);margin-bottom:6px}
+  .eyou{background:var(--rose);height:100%;display:flex;align-items:center;justify-content:center;font-size:.62rem;color:#fff;font-weight:600;transition:width 1.2s ease}
+  .ethem{background:var(--blush);height:100%;display:flex;align-items:center;justify-content:center;font-size:.62rem;color:#fff;font-weight:600;transition:width 1.2s ease}
+  .elabels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-weight:500}
+  .ewarn{font-size:.73rem;color:var(--gold);margin-top:8px}
+
+  .dnum{font-family:var(--serif);font-size:2.6rem;color:var(--mauve);line-height:1}
+  .dnum span{font-size:1rem;color:var(--muted);font-family:var(--sans)}
+  .dhearts{font-size:1.1rem;letter-spacing:2px;margin:6px 0}
+  .dtxt{font-size:.8rem;color:var(--muted);line-height:1.55;font-style:italic}
+
+  .rlist{list-style:none}
+  .rlist li{font-size:.83rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;line-height:1.55}
+  .rlist li:last-child{border-bottom:none}
+  .rlist li::before{content:'';width:12px;height:12px;background:var(--rose-l);border:1px solid var(--rose-b);border-radius:50%;flex-shrink:0;margin-top:3px;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 10s-4-2.8-4-5.6A2.4 2.4 0 016 4.8a2.4 2.4 0 014 0C10 7.2 6 10 6 10z' fill='%23d64060'/%3E%3C/svg%3E");background-size:8px;background-position:center;background-repeat:no-repeat}
+
+  .ptag{display:inline-block;background:var(--mauve-l);color:var(--mauve);border:1px solid #d4a8c8;border-radius:20px;font-size:.68rem;font-weight:600;padding:3px 12px;margin:2px 3px 2px 0;text-transform:capitalize}
+  .pdesc{font-size:.8rem;color:var(--muted);margin-top:10px;line-height:1.55;font-style:italic}
+
+  .tbx{background:var(--gold-l);border:1px solid var(--gold-b);border-radius:10px;padding:12px 14px;font-size:.85rem;color:var(--gold);line-height:1.6;font-style:italic}
+
+  .otabs{display:flex;gap:8px;margin-bottom:12px}
+  .otab{flex:1;padding:8px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--sans);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s}
+  .otab.act{background:var(--rose-l);border-color:var(--rose-b);color:var(--rose);font-weight:600}
+  .obody{font-size:.83rem;color:var(--muted);line-height:1.7}
+  .obody strong{color:var(--text);font-weight:500}
+
+  .aitem{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+  .aitem:last-child{border-bottom:none}
+  .adot{width:7px;height:7px;border-radius:50%;background:var(--blush);flex-shrink:0;margin-top:5px}
+
+  .slbl{font-size:.68rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:block}
+  .mempty{font-size:.8rem;color:var(--faint);font-style:italic;text-align:center;padding:20px 0}
+  .mitem{background:var(--warm);border:1px solid var(--border2);border-radius:10px;padding:9px 12px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;position:relative}
+  .mitem:hover{border-color:var(--rose-b)}
+  .mverd{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+  .mv-yes{color:var(--sage)}.mv-no{color:var(--rose)}.mv-wait{color:var(--gold)}.mv-move{color:var(--mauve)}
+  .mtxt{font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+  .mtime{font-size:.63rem;color:var(--faint);margin-top:3px}
+  .mdel{position:absolute;top:9px;right:10px;background:none;border:none;color:var(--faint);cursor:pointer;font-size:.72rem;padding:2px 4px;border-radius:4px}
+  .mdel:hover{color:var(--rose);background:var(--rose-l)}
+  .tcard{background:var(--warm);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;margin-top:12px}
+  .ttxt{font-size:.78rem;color:var(--muted);line-height:1.55;font-style:italic}
+
+  @media(max-width:760px){
+    .app{grid-template-columns:1fr}
+    aside{border-top:1px solid var(--border)}
+    .grid{grid-template-columns:1fr}
+    .wide{grid-column:span 1}
+    .verdict{flex-direction:column;align-items:flex-start;gap:10px}
+    .vsub{max-width:100%}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-heart">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M8 14s-6-4-6-8.4A3.6 3.6 0 018 6a3.6 3.6 0 016 0C14 10 8 14 8 14z" fill="#d64060"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">Heartcheck</div>
+      <div class="logo-sub">AI Relationship Intelligence</div>
+    </div>
+  </div>
+  <div class="built-pill">No API key needed</div>
+</header>
+
+<div class="app">
+<main>
+  <div class="hero">
+    <h2>Should you text <em>them?</em></h2>
+    <p>Tell me what happened. I'll give you an honest read.</p>
+  </div>
+
+  <span class="lbl">Your situation</span>
+  <textarea id="sc" placeholder="Who is this person? What happened between you? What are you thinking of texting? The more detail you share, the sharper the reading…"></textarea>
+  <button class="analyze-btn" id="btn" onclick="analyze()">
+    <svg viewBox="0 0 16 16" fill="none" style="width:16px;height:16px"><path d="M8 14s-6-4-6-8.4A3.6 3.6 0 018 6a3.6 3.6 0 016 0C14 10 8 14 8 14z" fill="white"/></svg>
+    Get my reading
+  </button>
+  <div class="loader" id="loader"><div class="loader-fill"></div></div>
+
+  <div class="results" id="results">
+    <div class="reading-card">
+      <div class="rhead"><span class="rid" id="rid">READING #——</span><span class="cbadge" id="cb">——</span></div>
+      <div class="rrow"><span class="rk">Subject</span><span class="rv" id="rSubj">—</span></div>
+      <div class="rrow"><span class="rk">Pattern</span><span class="rv" id="rPat">—</span></div>
+      <div class="rrow"><span class="rk">Their interest</span><span class="rv" id="rInt">—</span></div>
+      <div class="rrow"><span class="rk">My read</span><span class="rv" id="rSum" style="color:var(--muted);font-style:italic">—</span></div>
+    </div>
+
+    <div class="verdict" id="vcard">
+      <div class="vicon" id="vicon">💭</div>
+      <div style="flex:1">
+        <div class="vdec" id="vdec">—</div>
+        <div class="vconf" id="vconf">—</div>
+      </div>
+      <div class="vsub" id="vsub">—</div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><div class="ctitle">🚩 Red flag scan</div><div id="flags"></div></div>
+      <div class="card"><div class="ctitle">📊 Risk assessment</div><div id="risks"></div></div>
+      <div class="card"><div class="ctitle">⚖️ Effort balance</div><div id="effort"></div></div>
+      <div class="card"><div class="ctitle">🤡 Delulu meter</div><div id="delu"></div></div>
+      <div class="card wide"><div class="ctitle">🧠 My reasoning</div><ul class="rlist" id="reasons"></ul></div>
+      <div class="card"><div class="ctitle">🚨 Detected patterns</div><div id="pats"></div></div>
+      <div class="card"><div class="ctitle">⏳ Timing advice</div><div class="tbx" id="timing"></div></div>
+      <div class="card wide">
+        <div class="ctitle">🔁 Outcome simulator</div>
+        <div class="otabs">
+          <button class="otab act" id="ot1" onclick="swTab('text')">💬 If you text…</button>
+          <button class="otab" id="ot2" onclick="swTab('notext')">🤐 If you don't…</button>
+        </div>
+        <div class="obody" id="obody"></div>
+      </div>
+      <div class="card wide"><div class="ctitle">💡 Smart advice</div><div id="adv"></div></div>
+    </div>
+  </div>
+</main>
+
+<aside>
+  <span class="slbl">💌 Reading history</span>
+  <div id="mlist"></div>
+  <p class="mempty" id="mempty">No readings yet</p>
+  <div class="tcard" id="tcard" style="display:none">
+    <span class="slbl" style="margin-bottom:6px">📈 Your pattern</span>
+    <p class="ttxt" id="ttxt"></p>
+  </div>
+</aside>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  HEARTCHECK ENGINE  — fully client-side "LLM"
+//  Keyword scoring → weighted signal map → reading
+// ─────────────────────────────────────────────
+
+var SIGNALS = {
+  // ── positive indicators ──
+  consistent:    { w:+3, flags:{inconsistency:-2}, patterns:[] },
+  "texts first": { w:+2, flags:{low_effort:-2}, patterns:[] },
+  "reaches out": { w:+2, flags:{low_effort:-1}, patterns:[] },
+  "makes plans": { w:+3, flags:{low_effort:-2}, patterns:[] },
+  "asked me out":{ w:+3, flags:{low_effort:-2}, patterns:[] },
+  initiates:     { w:+2, flags:{low_effort:-1}, patterns:[] },
+  effort:        { w:+2, flags:{low_effort:-2}, patterns:[] },
+  "calls me":    { w:+2, flags:{emotional_unavailability:-1}, patterns:[] },
+  "opened up":   { w:+2, flags:{emotional_unavailability:-2}, patterns:[] },
+  vulnerable:    { w:+2, flags:{emotional_unavailability:-2}, patterns:[] },
+  "i like you":  { w:+3, flags:{low_effort:-1}, patterns:[] },
+  "said he likes":{ w:+3, flags:{low_effort:-1}, patterns:[] },
+  "said she likes":{ w:+3, flags:{low_effort:-1}, patterns:[] },
+  healthy:       { w:+3, flags:{}, patterns:["healthy"] },
+  committed:     { w:+4, flags:{emotional_unavailability:-3}, patterns:["healthy"] },
+  boyfriend:     { w:+3, flags:{situational_convenience:-1}, patterns:[] },
+  girlfriend:    { w:+3, flags:{situational_convenience:-1}, patterns:[] },
+  apologized:    { w:+2, flags:{manipulation:-1}, patterns:[] },
+
+  // ── negative indicators ──
+  ghost:         { w:-3, flags:{low_effort:2, inconsistency:2}, patterns:["ghosting"] },
+  ghosted:       { w:-3, flags:{low_effort:2, inconsistency:2}, patterns:["ghosting"] },
+  ghosting:      { w:-3, flags:{low_effort:2, inconsistency:2}, patterns:["ghosting"] },
+  "left on read":{ w:-2, flags:{low_effort:2}, patterns:["ghosting"] },
+  "no reply":    { w:-2, flags:{low_effort:2}, patterns:["ghosting"] },
+  "never texts": { w:-2, flags:{low_effort:2}, patterns:["ghosting"] },
+  "takes days":  { w:-1, flags:{low_effort:1}, patterns:[] },
+  "takes forever":{ w:-1, flags:{low_effort:1}, patterns:[] },
+  "hot and cold":{ w:-3, flags:{inconsistency:3}, patterns:["hot and cold"] },
+  "hot & cold":  { w:-3, flags:{inconsistency:3}, patterns:["hot and cold"] },
+  inconsistent:  { w:-2, flags:{inconsistency:3}, patterns:[] },
+  "blows hot":   { w:-2, flags:{inconsistency:3}, patterns:["hot and cold"] },
+  breadcrumb:    { w:-3, flags:{low_effort:2, inconsistency:2}, patterns:["breadcrumbing"] },
+  breadcrumbing: { w:-3, flags:{low_effort:2, inconsistency:2}, patterns:["breadcrumbing"] },
+  "keeps me hanging":{ w:-2, flags:{inconsistency:2}, patterns:["breadcrumbing"] },
+  "string me along":{ w:-3, flags:{manipulation:2, inconsistency:2}, patterns:["breadcrumbing"] },
+  "love bomb":   { w:-2, flags:{manipulation:3}, patterns:["love bombing"] },
+  "love bombing":{ w:-2, flags:{manipulation:3}, patterns:["love bombing"] },
+  "too intense": { w:-1, flags:{manipulation:2}, patterns:["love bombing"] },
+  "future talk": { w:-1, flags:{inconsistency:2}, patterns:["future faking"] },
+  "future faking":{ w:-3, flags:{inconsistency:3, emotional_unavailability:2}, patterns:["future faking"] },
+  marriage:      { w:-1, flags:{inconsistency:2}, patterns:["future faking"] },
+  "talk about marriage":{ w:-2, flags:{inconsistency:3}, patterns:["future faking"] },
+  "won't commit":{ w:-3, flags:{emotional_unavailability:3, inconsistency:2}, patterns:["future faking"] },
+  "not committing":{ w:-3, flags:{emotional_unavailability:3}, patterns:["future faking"] },
+  "not ready":   { w:-2, flags:{emotional_unavailability:2}, patterns:[] },
+  "not looking": { w:-2, flags:{emotional_unavailability:2}, patterns:[] },
+  situationship: { w:-2, flags:{emotional_unavailability:2, situational_convenience:2}, patterns:["situationship"] },
+  "friends with benefits":{ w:-1, flags:{situational_convenience:2}, patterns:["situationship"] },
+  "only texts late":{ w:-2, flags:{situational_convenience:3}, patterns:["situationship"] },
+  "only when convenient":{ w:-3, flags:{situational_convenience:3}, patterns:["situationship"] },
+  convenient:    { w:-2, flags:{situational_convenience:3}, patterns:["situationship"] },
+  "gaslighting": { w:-4, flags:{manipulation:4}, patterns:["emotional manipulation"] },
+  manipulative:  { w:-3, flags:{manipulation:4}, patterns:["emotional manipulation"] },
+  manipulates:   { w:-3, flags:{manipulation:3}, patterns:["emotional manipulation"] },
+  "makes me feel crazy":{ w:-3, flags:{manipulation:4}, patterns:["emotional manipulation"] },
+  "slow fade":   { w:-2, flags:{inconsistency:2, low_effort:2}, patterns:["slow fade"] },
+  "fading away": { w:-2, flags:{inconsistency:2, low_effort:2}, patterns:["slow fade"] },
+  "ex":          { w:-1, flags:{inconsistency:1}, patterns:[] },
+  "my ex":       { w:-2, flags:{inconsistency:1, situational_convenience:1}, patterns:[] },
+  "still in love with ex":{ w:-3, flags:{emotional_unavailability:3}, patterns:[] },
+  "not over ex": { w:-3, flags:{emotional_unavailability:3}, patterns:[] },
+  "seeing someone":{ w:-3, flags:{situational_convenience:2}, patterns:[] },
+  "has a girlfriend":{ w:-4, flags:{situational_convenience:3, manipulation:2}, patterns:[] },
+  "has a boyfriend":{ w:-4, flags:{situational_convenience:3, manipulation:2}, patterns:[] },
+  unavailable:   { w:-2, flags:{emotional_unavailability:3}, patterns:[] },
+  "emotionally unavailable":{ w:-3, flags:{emotional_unavailability:4}, patterns:[] },
+  "cancelled":   { w:-1, flags:{low_effort:1, inconsistency:1}, patterns:[] },
+  "cancels plans":{ w:-2, flags:{low_effort:2, inconsistency:2}, patterns:[] },
+  "stood me up": { w:-3, flags:{low_effort:3, inconsistency:2}, patterns:[] },
+  "ignores me":  { w:-2, flags:{low_effort:2, inconsistency:2}, patterns:["slow fade"] },
+  "reads my messages":{ w:-2, flags:{low_effort:2}, patterns:["ghosting"] },
+  "weeks ago":   { w:-1, flags:{low_effort:1}, patterns:[] },
+  "months ago":  { w:-2, flags:{low_effort:2}, patterns:[] },
+
+  // ── confusion / mixed signals ──
+  confused:      { w:-1, flags:{inconsistency:2}, patterns:[] },
+  "mixed signals":{ w:-2, flags:{inconsistency:3}, patterns:["hot and cold"] },
+  mixed:         { w:-1, flags:{inconsistency:2}, patterns:[] },
+  "blowing hot and cold":{ w:-2, flags:{inconsistency:3}, patterns:["hot and cold"] },
+  "doesn't know what he wants":{ w:-2, flags:{inconsistency:2, emotional_unavailability:1}, patterns:[] },
+  "doesn't know what she wants":{ w:-2, flags:{inconsistency:2, emotional_unavailability:1}, patterns:[] },
+};
+
+var FLAG_LABELS = {
+  inconsistency: "Inconsistency",
+  low_effort: "Low effort",
+  emotional_unavailability: "Emotional unavailability",
+  situational_convenience: "Situational convenience",
+  manipulation: "Manipulation"
+};
+
+var TREND_MSGS = {
+  no:   "You keep reaching for people who aren't fully showing up. You deserve consistent, real presence.",
+  move: "Several readings are pointing you toward moving on. That takes courage — and it's the right call.",
+  wait: "You tend to find yourself in ambiguous situations. Trust your gut more than the mixed signals.",
+  yes:  "Mostly green flags across your readings. Your instincts are well-calibrated — trust them."
+};
+
+// ─ Pool of varied phrases keyed by signal level ─
+var POOLS = {
+  verdict_yes: [
+    "The signals here are genuinely positive — this is worth pursuing.",
+    "The effort and consistency are there. Go for it.",
+    "Green flags across the board. You're not overthinking this one.",
+    "This one seems real. Send the text.",
+    "The reciprocity is there. Don't second-guess it."
+  ],
+  verdict_wait: [
+    "Something is off. Give it a few days before making a move.",
+    "The signals are too mixed to act on right now. Wait and watch.",
+    "Let them come to you this time. Your move can wait.",
+    "Hold off. A little distance will tell you everything.",
+    "Pause. Not because of them — but to get clear on what you actually want."
+  ],
+  verdict_no: [
+    "The pattern here is clear, even if it's painful to see.",
+    "Texting rewards behavior that doesn't deserve rewarding.",
+    "Sending that message won't change the dynamic — only they can do that.",
+    "Your energy deserves to go somewhere it's matched.",
+    "The evidence is stacked against this one. Trust what you're already seeing."
+  ],
+  verdict_move: [
+    "This has run its course. Moving on isn't giving up — it's choosing yourself.",
+    "You already know this isn't working. The reading just confirms it.",
+    "Some people are lessons, not destinations. This might be one of them.",
+    "Your energy is too valuable to keep spending here.",
+    "The kindest thing you can do for yourself is close this chapter."
+  ],
+
+  reasoning_inconsistency: [
+    "The inconsistency you're describing is a pattern, not a phase. Patterns don't fix themselves.",
+    "Hot and cold behavior protects them while keeping you off-balance — that's not fair to you.",
+    "People who want to be in your life show up consistently. The inconsistency is the message.",
+    "Mixed signals aren't accidental. They usually mean someone is hedging their options."
+  ],
+  reasoning_low_effort: [
+    "The effort imbalance here is significant. You shouldn't have to carry this alone.",
+    "When someone is genuinely interested, reaching out doesn't feel like a chore to them.",
+    "Low effort early on rarely improves with time — it usually sets the tone.",
+    "You're putting in more than you're getting back. That math doesn't change on its own."
+  ],
+  reasoning_emotional_unavailability: [
+    "Emotional unavailability isn't something you can love someone out of. They have to want to change.",
+    "Someone who can't meet you emotionally won't suddenly be able to — that's an internal barrier.",
+    "Being available emotionally is a choice. If they're not making it, that tells you something.",
+    "You can't build real intimacy with someone who keeps the door half-closed."
+  ],
+  reasoning_situational_convenience: [
+    "Convenience-based interest disappears when the convenience does. That's not a foundation.",
+    "If they only reach out when it's easy or beneficial for them, you're an option — not a priority.",
+    "You deserve to be someone's choice, not their fallback.",
+    "The pattern of showing up only when convenient is a form of low effort disguised as interest."
+  ],
+  reasoning_manipulation: [
+    "The manipulation signals here are worth taking seriously. Trust what you're observing.",
+    "Gaslighting and future-faking are ways of keeping you invested without accountability.",
+    "If something keeps making you feel confused about your own reality, that's a red flag.",
+    "Healthy connections don't require you to constantly question what's real."
+  ],
+  reasoning_positive: [
+    "The effort being shown here is genuine — that counts for a lot.",
+    "Consistency is one of the clearest signals of real interest. It's showing here.",
+    "They're doing the right things. Sometimes it really is that simple.",
+    "Real interest doesn't require decoding. What you're seeing is what it is."
+  ],
+  reasoning_neutral: [
+    "Take a beat before acting. Clarity is more valuable than speed here.",
+    "The situation is genuinely ambiguous — that ambiguity itself is information.",
+    "Sometimes the right move is to slow down and let their actions do the talking.",
+    "You don't have to force clarity right now. Let it develop naturally."
+  ],
+
+  timing_positive: [
+    "Now is fine. You don't need to overthink the timing.",
+    "Send it today. Waiting won't change anything here.",
+    "No need to strategize. Just reach out naturally."
+  ],
+  timing_negative: [
+    "Wait at least 3–5 days. Stop initiating for now.",
+    "Give it a week. If they want to reach out, let them do it first.",
+    "Stop initiating entirely for now. See what they do with the silence.",
+    "Take 72 hours minimum before sending anything."
+  ],
+  timing_move: [
+    "There's no good time — moving on is the move.",
+    "The timing doesn't matter here. The decision does.",
+    "Rather than timing a text, spend that energy on letting go."
+  ],
+
+  if_text_short_positive: [
+    "They'll likely respond warmly and fairly quickly.",
+    "Good chance of a positive response.",
+    "You'll probably hear back — and it'll feel good."
+  ],
+  if_text_short_negative: [
+    "You might get a reply, but it probably won't give you what you're looking for.",
+    "A response isn't guaranteed — and if you get one, it may be vague.",
+    "You'll likely get a response that keeps you hanging without real answers."
+  ],
+  if_no_text_short_positive: [
+    "They may reach out to you — let that happen naturally.",
+    "The silence might prompt them to make a move.",
+    "A short pause can actually work in your favor here."
+  ],
+  if_no_text_short_negative: [
+    "Uncomfortable silence — but that discomfort is data.",
+    "You'll feel the urge to reach out. Sitting with it tells you something.",
+    "Short-term: quieter. Long-term: much clearer."
+  ],
+
+  subject_desc: [
+    "Person with mixed signals",
+    "Someone sending unclear intentions",
+    "Person with inconsistent behavior",
+    "Emotionally unavailable individual",
+    "Person requiring careful assessment",
+    "Situationally inconsistent connection",
+    "Someone with unclear investment level"
+  ],
+  subject_desc_positive: [
+    "Consistently interested person",
+    "Someone showing genuine effort",
+    "Person demonstrating real reciprocity",
+    "Engaged and present individual",
+    "Someone showing promising signs"
+  ]
+};
+
+function pick(arr, seed) {
+  return arr[seed % arr.length];
+}
+
+function rng(seed, min, max) {
+  var x = Math.sin(seed) * 10000;
+  var r = x - Math.floor(x);
+  return Math.round(min + r * (max - min));
+}
+
+// ─ Main engine ─
+function heartcheck(text) {
+  var lower = text.toLowerCase();
+  var seed = 0;
+  for (var i = 0; i < text.length; i++) seed += text.charCodeAt(i) * (i + 1);
+
+  // Score signals
+  var score = 0;
+  var flagScores = { inconsistency: 0, low_effort: 0, emotional_unavailability: 0, situational_convenience: 0, manipulation: 0 };
+  var detectedPatterns = [];
+  var triggeredFlags = {};
+
+  Object.keys(SIGNALS).forEach(function(kw) {
+    if (lower.indexOf(kw) !== -1) {
+      var sig = SIGNALS[kw];
+      score += sig.w;
+      Object.keys(sig.flags).forEach(function(f) {
+        flagScores[f] = (flagScores[f] || 0) + sig.flags[f];
+        if (sig.flags[f] > 0) triggeredFlags[f] = true;
+      });
+      sig.patterns.forEach(function(p) {
+        if (detectedPatterns.indexOf(p) === -1) detectedPatterns.push(p);
+      });
+    }
+  });
+
+  // Detect time signals
+  var timeMatch = lower.match(/(\d+)\s*(day|week|month|year)/);
+  if (timeMatch) {
+    var tNum = parseInt(timeMatch[1]);
+    var tUnit = timeMatch[2];
+    if (tUnit === 'week' && tNum >= 2) { score -= 1; flagScores.low_effort += 1; }
+    if (tUnit === 'month') { score -= 2; flagScores.low_effort += 2; }
+    if (tUnit === 'year') { score -= 3; flagScores.low_effort += 3; }
+  }
+
+  // Cap flag scores 0–4
+  Object.keys(flagScores).forEach(function(k) {
+    flagScores[k] = Math.max(0, Math.min(4, flagScores[k]));
+  });
+
+  // Clamp score
+  score = Math.max(-12, Math.min(8, score));
+
+  // Derive decision
+  var dk, decision, confidence;
+  if (score >= 4) {
+    dk = 'yes'; decision = 'TEXT NOW';
+    confidence = rng(seed + 1, 72, 91);
+  } else if (score >= 1) {
+    dk = 'wait'; decision = 'WAIT';
+    confidence = rng(seed + 2, 62, 80);
+  } else if (score >= -4) {
+    dk = 'no'; decision = 'DO NOT TEXT';
+    confidence = rng(seed + 3, 70, 87);
+  } else {
+    dk = 'move'; decision = 'MOVE ON';
+    confidence = rng(seed + 4, 78, 93);
+  }
+
+  // Threat level
+  var totalFlagScore = Object.values ? Object.values(flagScores).reduce(function(a,b){return a+b;},0) : (function(){var t=0;Object.keys(flagScores).forEach(function(k){t+=flagScores[k];});return t;})();
+  var threatLevel = totalFlagScore >= 8 ? 'HIGH' : totalFlagScore >= 4 ? 'MEDIUM' : 'LOW';
+
+  // Risk numbers
+  var baseRisk = Math.max(0, (-score + 12) / 20);
+  var textingRisk = Math.min(95, Math.max(8, Math.round(baseRisk * 100 + rng(seed+5, -5, 5))));
+  var emotionalRisk = Math.min(95, Math.max(8, Math.round(baseRisk * 90 + flagScores.emotional_unavailability * 6 + rng(seed+6, -5, 8))));
+  var outcomeProbability = Math.min(92, Math.max(5, Math.round((1 - baseRisk) * 85 + rng(seed+7, -8, 8))));
+
+  // Effort
+  var youEffort = rng(seed+8, 50, 80);
+  var themEffort = dk === 'yes' ? rng(seed+9, 40, 60) : rng(seed+10, 15, 45);
+
+  // Delulu
+  var deluluScore = dk === 'yes' ? parseFloat((rng(seed+11, 1, 35) / 10).toFixed(1))
+    : dk === 'wait' ? parseFloat((rng(seed+12, 30, 55) / 10).toFixed(1))
+    : dk === 'no'   ? parseFloat((rng(seed+13, 45, 75) / 10).toFixed(1))
+    :                 parseFloat((rng(seed+14, 60, 90) / 10).toFixed(1));
+
+  // Flags → level strings
+  function flagLevel(n) {
+    if (n >= 3) return 'High';
+    if (n >= 2) return 'Medium';
+    if (n >= 1) return 'Low';
+    return 'None';
+  }
+
+  var redFlags = {};
+  Object.keys(flagScores).forEach(function(k) { redFlags[k] = flagLevel(flagScores[k]); });
+
+  // Intent probability
+  var intentPct = Math.max(5, Math.min(90, outcomeProbability + rng(seed+15, -10, 10)));
+  var intentLabel = intentPct > 60 ? intentPct + '% genuinely interested'
+    : intentPct > 35 ? intentPct + '% interested, with reservations'
+    : intentPct + '% — interest level unclear or low';
+
+  // Patterns fallback
+  if (detectedPatterns.length === 0) {
+    if (dk === 'yes') detectedPatterns = ['healthy'];
+    else if (flagScores.inconsistency >= 2) detectedPatterns = ['hot and cold'];
+    else if (flagScores.low_effort >= 2) detectedPatterns = ['slow fade'];
+    else if (flagScores.emotional_unavailability >= 2) detectedPatterns = ['situationship'];
+    else detectedPatterns = ['unclear dynamic'];
+  }
+
+  // Subject description
+  var subjectDesc = dk === 'yes'
+    ? pick(POOLS.subject_desc_positive, seed)
+    : pick(POOLS.subject_desc, seed + 1);
+
+  // Vary subject with time context if found
+  if (timeMatch) subjectDesc += ', ' + timeMatch[1] + ' ' + timeMatch[2] + (timeMatch[1] > 1 ? 's' : '') + ' of history';
+
+  // Build reasoning — pick relevant ones
+  var reasons = [];
+  if (flagScores.inconsistency >= 2) reasons.push(pick(POOLS.reasoning_inconsistency, seed + reasons.length));
+  if (flagScores.low_effort >= 2) reasons.push(pick(POOLS.reasoning_low_effort, seed + reasons.length));
+  if (flagScores.emotional_unavailability >= 2) reasons.push(pick(POOLS.reasoning_emotional_unavailability, seed + reasons.length));
+  if (flagScores.situational_convenience >= 2) reasons.push(pick(POOLS.reasoning_situational_convenience, seed + reasons.length));
+  if (flagScores.manipulation >= 2) reasons.push(pick(POOLS.reasoning_manipulation, seed + reasons.length));
+  if (score >= 3) reasons.push(pick(POOLS.reasoning_positive, seed + reasons.length));
+  if (reasons.length < 3) reasons.push(pick(POOLS.reasoning_neutral, seed + reasons.length + 20));
+  if (reasons.length < 4) reasons.push(pick(dk === 'yes' ? POOLS.reasoning_positive : POOLS.reasoning_neutral, seed + reasons.length + 40));
+  reasons = reasons.slice(0, 4);
+
+  // Pattern desc
+  var patternDescMap = {
+    'ghosting': 'Going silent without explanation — a way of avoiding accountability while leaving the door open.',
+    'hot and cold': 'Alternating warmth and distance that keeps you invested while they stay uncommitted.',
+    'breadcrumbing': 'Just enough attention to maintain your interest without offering anything real.',
+    'love bombing': 'Intense early affection that often precedes withdrawal — a manipulation pattern.',
+    'future faking': 'Using the language of commitment without any of the action to back it up.',
+    'situationship': 'An undefined connection that suits their needs more than yours.',
+    'slow fade': 'Gradual withdrawal designed to avoid a direct conversation — and your reaction.',
+    'emotional manipulation': 'Behavior designed to make you doubt your own perceptions.',
+    'healthy': 'Genuine, reciprocal interest with consistent and proportionate effort.',
+    'unclear dynamic': 'The dynamic here is genuinely ambiguous — more data needed.'
+  };
+  var patternDesc = patternDescMap[detectedPatterns[0]] || 'A dynamic worth watching carefully before investing further.';
+
+  // Timing
+  var timing = dk === 'yes' ? pick(POOLS.timing_positive, seed)
+    : dk === 'move' ? pick(POOLS.timing_move, seed)
+    : pick(POOLS.timing_negative, seed);
+
+  // Outcomes
+  var ifTextShort = dk === 'yes'
+    ? pick(POOLS.if_text_short_positive, seed)
+    : pick(POOLS.if_text_short_negative, seed);
+
+  var ifTextLong = dk === 'yes'
+    ? 'Things are likely to progress positively. The foundation looks solid.'
+    : dk === 'wait'
+    ? 'If the underlying pattern doesn\'t change, you\'ll be back here asking the same question.'
+    : 'The same pattern continues. Nothing changes because nothing has to — you\'re still there.';
+
+  var ifNoTextShort = dk === 'yes'
+    ? 'A brief pause won\'t hurt — but don\'t wait too long.'
+    : pick(POOLS.if_no_text_short_negative, seed);
+
+  var ifNoTextLong = dk === 'yes'
+    ? 'They may wonder where you went. But if you text, you\'ll likely get a good result anyway.'
+    : dk === 'move'
+    ? 'You gain clarity, then peace. The silence becomes freedom.'
+    : 'You find out quickly whether they pursue or fade. Either answer is useful.';
+
+  // Advice pool
+  var advicePool = {
+    yes: [
+      "You've been reading into this — stop. The signs are good. Just text.",
+      "Match their energy, don't exceed it. Let it develop naturally.",
+      "Don't overthink the wording. Authenticity reads better than strategy.",
+      "Keep it light for now. You don't need to say everything at once."
+    ],
+    wait: [
+      "Don't initiate again until they've made a move. Let the silence do some work.",
+      "Match their effort level — not more, not less.",
+      "\"Maybe\" and \"soon\" are not plans. Hold out for concrete.",
+      "Give yourself a time limit. If nothing changes in 2 weeks, you have your answer."
+    ],
+    no: [
+      "Texting won't change the dynamic — only their behavior can do that.",
+      "You deserve someone who makes you feel certain, not constantly confused.",
+      "Notice how much mental energy this is taking up. That's the real cost.",
+      "If you do text, ask something direct. Vague messages get vague answers."
+    ],
+    move: [
+      "Moving on is an act of self-respect, not defeat.",
+      "The time you spend here is time not spent on someone who actually wants you.",
+      "You don't need closure from them. You can give it to yourself.",
+      "Let the silence be your answer. Their actions have already spoken."
+    ]
+  };
+
+  // Delulu text
+  var deluluTexts = {
+    yes: "You're actually reading this pretty clearly. Not much delusion here.",
+    wait: "There's some wishful thinking happening. Not a lot, but enough to notice.",
+    no: "You're over-interpreting the good moments and underweighting the bad ones.",
+    move: "The story you're telling yourself about this person is more generous than the evidence."
+  };
+
+  // Summary
+  var summaries = {
+    yes: "Reciprocal interest with consistent behavior — the reading is positive.",
+    wait: "Mixed signals that need more time to resolve before you act.",
+    no: "A pattern that doesn't serve you, even if individual moments felt real.",
+    move: "The sum of the evidence points away from this connection."
+  };
+
+  return {
+    decision: decision,
+    decision_key: dk,
+    confidence: confidence,
+    verdict_sub: pick(POOLS['verdict_' + dk], seed + 99),
+    case_subject: subjectDesc,
+    threat_level: threatLevel,
+    intent_probability: intentLabel,
+    case_summary: summaries[dk],
+    red_flags: redFlags,
+    texting_risk: textingRisk,
+    emotional_risk: emotionalRisk,
+    outcome_probability: outcomeProbability,
+    you_effort: youEffort,
+    them_effort: themEffort,
+    delulu_score: deluluScore,
+    delulu_text: deluluTexts[dk],
+    reasoning: reasons,
+    patterns: detectedPatterns,
+    pattern_desc: patternDesc,
+    timing: timing,
+    if_text_short: ifTextShort,
+    if_text_long: ifTextLong,
+    if_no_text_short: ifNoTextShort,
+    if_no_text_long: ifNoTextLong,
+    advice: advicePool[dk]
+  };
+}
+
+// ─────────────────────────────────────────────
+//  UI
+// ─────────────────────────────────────────────
+
+var mem = [];
+try { mem = JSON.parse(localStorage.getItem('hc_mem') || '[]'); } catch(e) {}
+var curData = null, curTab = 'text';
+var cnt = Math.floor(Math.random() * 9000) + 1000;
+
+renderMem();
+
+function analyze() {
+  var sc = document.getElementById('sc').value.trim();
+  if (!sc || sc.length < 10) return;
+
+  cnt++;
+  var cid = '#' + cnt;
+
+  document.getElementById('btn').disabled = true;
+  document.getElementById('btn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" style="width:16px;height:16px"><path d="M8 14s-6-4-6-8.4A3.6 3.6 0 018 6a3.6 3.6 0 016 0C14 10 8 14 8 14z" fill="white"/></svg> Reading the signs…';
+  document.getElementById('loader').classList.add('on');
+  document.getElementById('results').classList.remove('on');
+
+  // Simulate thinking delay
+  setTimeout(function() {
+    var d = heartcheck(sc);
+    curData = d;
+    render(d, cid, sc);
+  }, 900 + Math.random() * 600);
+}
+
+function render(d, cid, sc) {
+  document.getElementById('btn').disabled = false;
+  document.getElementById('btn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" style="width:16px;height:16px"><path d="M8 14s-6-4-6-8.4A3.6 3.6 0 018 6a3.6 3.6 0 016 0C14 10 8 14 8 14z" fill="white"/></svg> Get my reading';
+  document.getElementById('loader').classList.remove('on');
+
+  document.getElementById('rid').textContent = 'READING ' + cid;
+  var tl = d.threat_level.toUpperCase();
+  var cb = document.getElementById('cb');
+  cb.textContent = tl === 'HIGH' ? 'High concern' : tl === 'LOW' ? 'Low concern' : 'Medium concern';
+  cb.className = 'cbadge ' + (tl === 'HIGH' ? 'cb-h' : tl === 'LOW' ? 'cb-l' : 'cb-m');
+  document.getElementById('rSubj').textContent = d.case_subject;
+  document.getElementById('rPat').textContent = d.patterns.join(', ');
+  document.getElementById('rInt').textContent = d.intent_probability;
+  document.getElementById('rSum').textContent = d.case_summary;
+
+  var dk = d.decision_key;
+  var icons = { yes:'💚', no:'💔', wait:'⏳', move:'🌸' };
+  var vcls = { yes:'v-yes', no:'v-no', wait:'v-wait', move:'v-move' };
+  var dcls = { yes:'vd-yes', no:'vd-no', wait:'vd-wait', move:'vd-move' };
+  document.getElementById('vcard').className = 'verdict ' + vcls[dk];
+  document.getElementById('vicon').textContent = icons[dk];
+  var vd = document.getElementById('vdec');
+  vd.textContent = d.decision;
+  vd.className = 'vdec ' + dcls[dk];
+  document.getElementById('vconf').textContent = 'Confidence: ' + d.confidence + '%';
+  document.getElementById('vsub').textContent = d.verdict_sub;
+
+  var fh = '';
+  Object.keys(FLAG_LABELS).forEach(function(k) {
+    var v = d.red_flags[k] || 'None';
+    fh += '<div class="flag-row"><span>' + FLAG_LABELS[k] + '</span><span class="fbadge fb-' + v.toLowerCase() + '">' + v + '</span></div>';
+  });
+  document.getElementById('flags').innerHTML = fh;
+
+  var risks = [
+    { l:'Texting risk', v:d.texting_risk, hi:true },
+    { l:'Emotional risk', v:d.emotional_risk, hi:true },
+    { l:'Positive outcome', v:d.outcome_probability, hi:false }
+  ];
+  var rh = '';
+  risks.forEach(function(r) {
+    var col = r.hi ? (r.v > 66 ? 'rf-rose' : r.v > 33 ? 'rf-gold' : 'rf-sage') : (r.v > 60 ? 'rf-sage' : r.v > 35 ? 'rf-gold' : 'rf-rose');
+    rh += '<div class="risk-row"><div class="risk-lbl"><span>' + r.l + '</span><span class="risk-pct">' + r.v + '%</span></div><div class="risk-track"><div class="risk-fill ' + col + '" style="width:' + r.v + '%"></div></div></div>';
+  });
+  document.getElementById('risks').innerHTML = rh;
+
+  var tot = d.you_effort + d.them_effort || 100;
+  var yp = Math.round(d.you_effort / tot * 100), tp = 100 - yp;
+  document.getElementById('effort').innerHTML =
+    '<div class="etrack"><div class="eyou" style="width:' + yp + '%">' + yp + '%</div><div class="ethem" style="width:' + tp + '%">' + tp + '%</div></div>' +
+    '<div class="elabels"><span>You</span><span>Them</span></div>' +
+    (Math.abs(yp - tp) > 20 ? '<p class="ewarn">Effort imbalance detected</p>' : '');
+
+  var ds = d.delulu_score;
+  var hearts = '';
+  for (var i = 0; i < Math.min(Math.round(ds / 2), 5); i++) hearts += '🤡';
+  document.getElementById('delu').innerHTML =
+    '<div class="dnum">' + ds.toFixed(1) + '<span> /10</span></div>' +
+    '<div class="dhearts">' + (hearts || '😌') + '</div>' +
+    '<div class="dtxt">' + d.delulu_text + '</div>';
+
+  var rl = '';
+  d.reasoning.forEach(function(r) { rl += '<li>' + r + '</li>'; });
+  document.getElementById('reasons').innerHTML = rl;
+
+  var ph = d.patterns.map(function(p) { return '<span class="ptag">' + p + '</span>'; }).join('');
+  ph += '<p class="pdesc">' + d.pattern_desc + '</p>';
+  document.getElementById('pats').innerHTML = ph;
+
+  document.getElementById('timing').textContent = d.timing;
+
+  curTab = 'text';
+  document.getElementById('ot1').classList.add('act');
+  document.getElementById('ot2').classList.remove('act');
+  showOutcome();
+
+  var ah = '';
+  d.advice.forEach(function(a) { ah += '<div class="aitem"><div class="adot"></div><span>' + a + '</span></div>'; });
+  document.getElementById('adv').innerHTML = ah;
+
+  document.getElementById('results').classList.add('on');
+  document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  mem.unshift({ cid:cid, sc:sc.slice(0,80), decision:d.decision, dk:dk, ts:Date.now() });
+  if (mem.length > 10) mem = mem.slice(0, 10);
+  try { localStorage.setItem('hc_mem', JSON.stringify(mem)); } catch(e) {}
+  renderMem();
+}
+
+function swTab(t) {
+  curTab = t;
+  document.getElementById('ot1').classList.toggle('act', t === 'text');
+  document.getElementById('ot2').classList.toggle('act', t === 'notext');
+  showOutcome();
+}
+
+function showOutcome() {
+  if (!curData) return;
+  document.getElementById('obody').innerHTML = curTab === 'text'
+    ? '<strong>Short term:</strong> ' + curData.if_text_short + '<br><br><strong>Long term:</strong> ' + curData.if_text_long
+    : '<strong>Short term:</strong> ' + curData.if_no_text_short + '<br><br><strong>Long term:</strong> ' + curData.if_no_text_long;
+}
+
+function renderMem() {
+  var list = document.getElementById('mlist');
+  var empty = document.getElementById('mempty');
+  var tc = document.getElementById('tcard');
+  if (!mem.length) { list.innerHTML=''; empty.style.display='block'; tc.style.display='none'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = mem.map(function(m, i) {
+    return '<div class="mitem" onclick="loadMem(' + i + ')">' +
+      '<div class="mverd mv-' + (m.dk||'wait') + '">' + esc(m.decision||'') + '</div>' +
+      '<div class="mtxt">' + esc(m.sc||'') + '</div>' +
+      '<div class="mtime">' + ago(m.ts) + '</div>' +
+      '<button class="mdel" onclick="event.stopPropagation();delMem(' + i + ')">✕</button></div>';
+  }).join('');
+  if (mem.length >= 2) {
+    var counts = {};
+    mem.forEach(function(m) { counts[m.dk] = (counts[m.dk]||0) + 1; });
+    var best = null, bn = 0;
+    Object.keys(counts).forEach(function(k) { if (counts[k] > bn) { best = k; bn = counts[k]; } });
+    document.getElementById('ttxt').textContent = TREND_MSGS[best] || 'A pattern is emerging.';
+    tc.style.display = 'block';
+  } else { tc.style.display = 'none'; }
+}
+
+function loadMem(i) { if (mem[i]) document.getElementById('sc').value = mem[i].sc; }
+function delMem(i) { mem.splice(i,1); try{localStorage.setItem('hc_mem',JSON.stringify(mem));}catch(e){} renderMem(); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ago(ts) {
+  var s = Math.floor((Date.now()-ts)/1000);
+  if (s<60) return 'just now';
+  if (s<3600) return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+document.getElementById('sc').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) analyze();
+});
+</script>
+</body>
+</html>
